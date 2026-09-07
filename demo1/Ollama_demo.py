@@ -11,7 +11,18 @@ def chat_with_ollama(user_input: str) -> str:
     global messages
     if user_input.strip() == "":
         return ""
-    messages.append({"role": "user", "content": user_input})
+    # 把规则写在这里，每次请求带上
+    system_rule = """
+你是一名专业助手。
+规则：
+1. 不要输出思考过程，直接输出最终回答；
+2. 回答简洁精炼，分点输出；
+3. 如果是代码，只输出可运行代码，不要多余解释；
+4. 每次回答都要在结尾加上ok。
+"""
+    full_prompt = f"{system_rule}\n用户问题：{user_input}"
+    messages.append({"role": "user", "content": full_prompt})
+
     response = client.chat(
         model="deepseek-r1:1.5b", 
         messages=messages
