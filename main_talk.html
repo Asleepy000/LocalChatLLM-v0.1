@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Ollama对话窗口</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background-color: #f4f6f8;
+            max-width: 700px;
+            margin: 20px auto;
+        }
+        #chat-box {
+            height: 500px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+            margin-bottom:12px;
+        }
+        .msg-user{
+            text-align:right;
+            margin:8px 0;
+        }
+        .msg-user span{
+            display:inline-block;
+            background:#409eff;
+            color:white;
+            padding:8px 12px;
+            border-radius:10px;
+            max-width:80%;
+            white-space:pre-wrap;
+        }
+        .msg-bot{
+            text-align:left;
+            margin:8px 0;
+        }
+        .msg-bot span{
+            display:inline-block;
+            background:#e5e7eb;
+            color:#222;
+            padding:8px 12px;
+            border-radius:10px;
+            max-width:80%;
+            white-space:pre-wrap;
+        }
+        .input-area{
+            display:flex;
+            gap:8px;
+        }
+        #user-input{
+            flex:1;
+            padding:10px;
+            font-size:14px;
+            border:1px solid #ccc;
+            border-radius:6px;
+        }
+        #send-btn{
+            padding:10px 22px;
+            background:#409eff;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        }
+        #send-btn:disabled{
+            background:#94b8ec;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-box"></div>
+    <div class="input-area">
+        <input id="user-input" placeholder="输入消息，回车发送">
+        <button id="send-btn">发送</button>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById("chat-box");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+
+        // 渲染消息到聊天框
+        function addMessage(text, isUser){
+            const div = document.createElement("div");
+            div.className = isUser ? "msg-user" : "msg-bot";
+            const span = document.createElement("span");
+            span.innerText = text;
+            div.appendChild(span);
+            chatBox.appendChild(div);
+            // 滚动到底部
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // 核心：调用后端接口
+        async function sendMessage(){
+            const text = userInput.value.trim();
+            if(!text) return;
+            addMessage(text, true);
+            userInput.value = "";
+            sendBtn.disabled = true;
+
+            try {
+                // ========== 这里是预留接口地址，对接Python后端 ==========
+                const resp = await fetch("http://127.0.0.1:8000/chat", {
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body: JSON.stringify({
+                        message: text
+                    })
+                });
+                const data = await resp.json();
+                addMessage(data.reply, false);
+            } catch(err){
+                addMessage("接口请求失败，请检查Python后端是否启动", false);
+                console.error(err);
+            }finally{
+                sendBtn.disabled = false;
+            }
+        }
+
+        sendBtn.onclick = sendMessage;
+        // 回车发送
+        userInput.addEventListener("keydown", e=>{
+            if(e.key === "Enter") sendMessage();
+        })
+    </script>
+</body>
+</html>
